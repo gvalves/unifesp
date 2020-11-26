@@ -5,6 +5,9 @@ def isPrime(number: int) -> bool:
     if number in (2, 3, 5, 7):
         return True
 
+    if number % 2 == 0 or number % 3 == 0 or number % 5 == 0 or number % 7 == 0:
+        return False
+
     _isPrime = True
 
     divider = 11
@@ -22,6 +25,13 @@ def isPrime(number: int) -> bool:
     return _isPrime
 
 
-print('Digite um número para saber se ele é primo: ', end='')
-number = int(input())
-print(f"O número {number}{' não' if not isPrime(number) else ''} é primo!")
+while True:
+    print('Digite um número para saber se ele é primo: ', end='')
+    dataInput = input()
+
+    if not dataInput.isnumeric():
+        break
+
+    number = int(dataInput)
+
+    print(f"O número {number}{' não' if not isPrime(number) else ''} é primo!")
