@@ -1,4 +1,4 @@
-def isPrime(number: int) -> bool:
+def is_prime_number(number: int) -> bool:
     if number < 2:
         return False
 
@@ -8,7 +8,7 @@ def isPrime(number: int) -> bool:
     if number % 2 == 0 or number % 3 == 0 or number % 5 == 0 or number % 7 == 0:
         return False
 
-    _isPrime = True
+    is_prime = True
 
     divider = 11
 
@@ -17,21 +17,21 @@ def isPrime(number: int) -> bool:
             break
 
         if number % divider == 0:
-            _isPrime = False
+            is_prime = False
             break
 
         divider += 2
 
-    return _isPrime
+    return is_prime
 
 
 while True:
     print('Digite um número para saber se ele é primo: ', end='')
-    dataInput = input()
+    data_in = input()
 
-    if not dataInput.isnumeric():
+    if not data_in.isnumeric():
         break
 
-    number = int(dataInput)
+    number = int(data_in)
 
-    print(f"O número {number}{' não' if not isPrime(number) else ''} é primo!")
+    print(f"O número {number} {'' if is_prime_number(number) else 'não'}é primo!")

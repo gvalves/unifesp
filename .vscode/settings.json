@@ -3,5 +3,6 @@
   "terminal.integrated.shellArgs.windows": [
     "-d",
     "Ubuntu"
-  ]
+  ],
+  "python.pythonPath": "/usr/bin/python3"
 }
