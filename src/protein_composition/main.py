@@ -1,12 +1,16 @@
 def get_protein_composition_from(filename: str) -> dict:
     iostream = open(filename)
-    data = dict()
-    data['sequence'] = ''
-    data['aa_or_na'] = dict()
+    data = {
+        'sequence': '',
+        'aminoacid': {
+            'quantity': {},
+            'frequence': {}
+        }
+    }
 
-    codes = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
-             'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
-             'U', 'V', 'W', 'X', 'Y', 'Z')
+    aminoacid_codes = ('A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+                       'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T',
+                       'U', 'V', 'W', 'X', 'Y', 'Z')
 
     for line in iostream.readlines():
         line = line[0:-2]
@@ -16,12 +20,15 @@ def get_protein_composition_from(filename: str) -> dict:
 
         data['sequence'] += line
 
-    for code in codes:
-        data['aa_or_na'][code] = data['sequence'].count(code)
+    for code in aminoacid_codes:
+        aminoacid_qt = data['sequence'].count(code)
+
+        data['aminoacid']['quantity'][code] = aminoacid_qt
+        data['aminoacid']['frequence'][code] = '{:.2%}'.format(
+            aminoacid_qt / len(data['sequence']))
 
     return data
 
 
-print('Digite o nome de um arquivo em formato FASTA: ', end='')
-filename = input()
-print(get_protein_composition_from(filename)['aa_or_na'])
+filename = input('Digite o nome de um arquivo em formato FASTA: ')
+print(get_protein_composition_from(filename)['aminoacid'])
