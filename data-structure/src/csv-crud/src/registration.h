@@ -4,21 +4,21 @@
 * Arquivo de cabeçalhos e definições 
 */
 
-#define MAXLIN 1000
-#define MAXSTR 200
+#define MAXLINELEN 1000
+#define MAXDATALEN 200
 
-#define DADOS "./data/datasets/ed2020/cad2020.csv"
-#define INDICE "./data/datasets/ed2020/cad2020.ind"
+#define DATA "./data/datasets/ed2020/cad2020.csv"
+#define INDEX "./data/datasets/ed2020/cad2020.ind"
 
-void extrai(char *lin, int elem, char *d);
-void criaIndice(char *nomearq, char *nomeind);
-int busca(char *nome);
+void getData(char *line, int dataIndex, char *data);
+void createIndex(char *dataFilename, char *indexFilename);
+int searchByName(char *name);
 
-typedef struct INDICECAD
+typedef struct RegistrationIndex
 {
-	char nome[MAXSTR];
-	unsigned long localiza;
-} IndiceCadastro;
+  char name[MAXLINELEN];
+  unsigned long pos;
+} RegistrationIndex;
 
 // Define números de campos do arquivo para ser usado como elem da função extrai()
 
