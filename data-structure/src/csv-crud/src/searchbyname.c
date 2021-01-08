@@ -19,7 +19,7 @@ void searchByName(char *name)
   {
     if (strstr(regs, search))
     {
-      if (regs_qt < 100)
+      if (regs_qt < regs_limit)
       {
         strcpy(regs_found[regs_qt], regs);
       }
@@ -31,7 +31,7 @@ void searchByName(char *name)
 
   printf("\n%d registros encontrados!\n-\n", regs_qt);
 
-  for (int i = 0; i < (regs_qt > 100 ? 100 : regs_qt); i++)
+  for (int i = 0; i < (regs_qt > regs_limit ? regs_limit : regs_qt); i++)
   {
     char *pregs_found = regs_found[i];
     fseek(datafile, strtol(strsep(&pregs_found, ";"), NULL, 10), 0);
