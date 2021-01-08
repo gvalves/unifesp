@@ -1,3 +1,5 @@
+.PHONY: main.out
+
 CC = gcc -I src
 LIB := $(shell cd src && ls *.c)
 

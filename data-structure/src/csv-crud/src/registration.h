@@ -4,15 +4,21 @@
 * Arquivo de cabeçalhos e definições 
 */
 
+#ifndef REGISTRATION_HEAD
+#define REGISTRATION_HEAD
+
 #define MAXLINELEN 1000
 #define MAXDATALEN 200
+
+#define LEN(arr) ((int)sizeof(arr) / sizeof(arr)[0])
 
 #define DATA "./data/datasets/ed2020/cad2020.csv"
 #define INDEX "./data/datasets/ed2020/cad2020.ind"
 
 void getData(char *line, int dataIndex, char *data);
 void createIndex(char *dataFilename, char *indexFilename);
-int searchByName(char *name);
+void searchByName(char *name);
+char *strupp(char *str);
 
 typedef struct RegistrationIndex
 {
@@ -64,3 +70,5 @@ typedef struct RegistrationIndex
 #define DIPLOMA_INGRESSO_ORGAO 40
 #define DIPLOMA_INGRESSO_SERVICOPUBLICO 41
 #define UF_EXERCICIO 42
+
+#endif

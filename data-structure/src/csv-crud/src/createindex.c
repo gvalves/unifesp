@@ -1,35 +1,41 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <registration.h>
 
-void createIndex(char *dataFilename, char *indexFilename)
+void createIndex(char *data_filename, char *idx_filename)
 {
-  FILE *dataFile, *indexFile;
+  FILE *datafile, *idxfile;
   char line[MAXLINELEN], data[MAXDATALEN];
 
-  dataFile = fopen(dataFilename, "r");
-  indexFile = fopen(indexFilename, "wb");
+  char test[MAXLINELEN];
+
+  datafile = fopen(data_filename, "r");
+  idxfile = fopen(idx_filename, "w");
 
   RegistrationIndex index;
 
-  if (!dataFile || !indexFile)
+  if (!datafile || !idxfile)
   {
-    printf("File not found!");
+    printf("File not found!\n");
     return;
   }
 
-  fseek(dataFile, 0, SEEK_END);
-  int endpos = ftell(dataFile);
+  fgets(line, sizeof(line), datafile);
+  long pos = ftell(datafile);
 
-  fseek(dataFile, 0, SEEK_SET);
-  fgets(line, sizeof(line), dataFile);
-
-  index.pos = ftell(dataFile);
-
-  for (unsigned long pos = ftell(dataFile); pos < endpos; pos = ftell(dataFile))
+  while (fgets(line, sizeof(line), datafile))
   {
-    printf("%lu\n", pos);
+    getData(line, NOME, data);
+    strcpy(index.name, data);
+
     index.pos = pos;
-    fgets(line, sizeof(line), dataFile);
+    pos = ftell(datafile);
+
+    char *name = index.name;
+
+    strsep(&name, "\"");
+
+    fprintf(idxfile, "%lu;%s\n", index.pos, strsep(&name, "\""));
   }
 }
