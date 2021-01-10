@@ -1,39 +1,66 @@
+from __future__ import annotations
+
+
 class Seq:
-    def __init__(self, id: str, data: str, desc: str = '', chars: tuple = ()):
+    def __init__(self, id: str, seq: str, desc: str = '', chars: tuple = ()):
         from functools import reduce
 
         self.id = id
-        self.data = str(reduce(lambda x, y: x + y,
-                               filter(lambda char: chars.count(char), data)))
+
+        try:
+            self.seq = str(reduce(lambda x, y: x + y,
+                                  filter(lambda char: chars.count(char), seq)))
+        except:
+            self.seq = ''
+
         self.desc = desc
         self.breakrow_in = 70
         self.chars = chars
 
     def __str__(self):
-        return self.composition()
+        return self.seq
+
+    def __add__(self, seq):
+        return str(self) + str(seq)
+
+    def __len__(self):
+        return len(self.seq)
 
     def composition(self) -> str:
-        result = f'>gi|${self.id}| ${self.desc}\n'
+        result = f'>gi|{self.id}| {self.desc}\n'
 
-        for i in range(0, len(self.data), self.breakrow_in):
-            result += f'{self.data[i:i+self.breakrow_in]}\n'
+        for i in range(0, len(self.seq), self.breakrow_in):
+            result += f'{self.seq[i:i+self.breakrow_in]}\n'
 
         return result
 
 
 class SeqAA(Seq):
-    def __init__(self, id: str, data: str, desc: str = '', chars: tuple = ()):
-        super().__init__(id, data, desc, ('C', 'F', 'L', 'I', 'M', 'V', 'S',
-                                          'P', 'A', 'Y', '*', 'H', 'Q', 'N',
-                                          'K', 'D', 'E', 'W', 'R', 'S', 'G'))
+    def __init__(self,
+                 id: str,
+                 seq: str,
+                 desc: str = '',
+                 chars: tuple = (),
+                 origin: SeqRNA = None):
+        super().__init__(id, seq, desc, ('C', 'F', 'L', 'I', 'M', 'V', 'S',
+                                         'P', 'A', 'Y', '*', 'H', 'Q', 'N',
+                                         'K', 'D', 'E', 'W', 'R', 'S', 'G'))
+        self.origin = origin
+
+
+class SeqAAFrames:
+    def __init__(self):
+        self.frames = [SeqAA('', ''), SeqAA('', ''), SeqAA('', ''),
+                       SeqAA('', ''), SeqAA('', ''), SeqAA('', '')]
+        self.frames[2]
 
 
 class SeqDNA(Seq):
-    def __init__(self, id: str, data: str, desc: str = '', chars: tuple = ()):
-        super().__init__(id, data, desc, ('A', 'T', 'G', 'C'))
+    def __init__(self, id: str, seq: str, desc: str = '', chars: tuple = ()):
+        super().__init__(id, seq, desc, ('A', 'T', 'G', 'C'))
 
     def complementary_reverse(self) -> SeqDNA:
-        data = ''
+        seq = ''
 
         def reverse_nitro_base(nitro_base: str) -> str:
             if nitro_base == 'A':
@@ -46,13 +73,15 @@ class SeqDNA(Seq):
                 return 'G'
             return ''
 
-        for nitro_base in self.data:
-            data += reverse_nitro_base(nitro_base)
+        for nitro_base in self.seq:
+            seq += reverse_nitro_base(nitro_base)
 
-        return SeqDNA(self.id, data, self.desc)
+        return SeqDNA(self.id, seq[::-1], self.desc)
 
     def transcribe(self) -> SeqRNA:
-        return SeqRNA(self.id, self.data.replace('T', 'U'), self.desc)
+        return SeqRNA(
+            self.id, self.seq.replace('T', 'U'), self.desc, origin=self
+        )
 
 
 class SeqRNA(Seq):
@@ -70,18 +99,30 @@ class SeqRNA(Seq):
                   'CGG': 'R', 'AGU': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R',
                   'GGU': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'}
 
-    def __init__(self, id: str, data: str, desc: str = '', chars: tuple = ()):
-        super().__init__(id, data, desc, ('A', 'U', 'G', 'C'))
+    def __init__(self,
+                 id: str,
+                 seq: str,
+                 desc: str = '',
+                 chars: tuple = (),
+                 origin: SeqDNA = None):
+        super().__init__(id, seq, desc, ('A', 'U', 'G', 'C'))
+        self.origin = origin
 
-    def translate(self) -> SeqAA:
-        init = self.data.find('AUG')
-        stop = (self.data.find('UAA'),
-                self.data.find('UAG'),
-                self.data.find('UGA'))
-        stop = min(filter(lambda x: x > 0, stop))
-        data = ''
+    def translate(self) -> SeqAAFrames:
+        seq = self.seq
+        revseq = self.origin.complementary_reverse().transcribe().seq
+        seqaaframes = SeqAAFrames()
 
-        for i in range(init, stop, 3):
-            data += SeqRNA.translator.get(self.data[i:i+3]) or ''
+        for frame in seqaaframes.frames:
+            frame.id = self.id
+            frame.desc = self.desc
+            frame.origin = self
 
-        return SeqAA(self.id, data, self.desc)
+        for i in range(0, len(self), 3):
+            for j in range(0, 3):
+                seqaaframes.frames[j].seq += SeqRNA.translator \
+                    .get(seq[i + j:i + j + 3]) or ''
+                seqaaframes.frames[j + 3].seq += SeqRNA.translator \
+                    .get(revseq[i + j:i + j + 3]) or ''
+
+        return seqaaframes
