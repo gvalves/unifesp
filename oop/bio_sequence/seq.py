@@ -1,21 +1,18 @@
 from __future__ import annotations
+from functools import reduce
 
 
 class Seq:
+    @staticmethod
+    def is_generic_fasta(filename: str) -> bool:
+        return filename.split('.')[-1] in ('fasta', 'fas', 'seq', 'fa', 'fsa')
+
     def __init__(self, id: str, seq: str, desc: str = '', chars: tuple = ()):
-        from functools import reduce
-
         self.id = id
-
-        try:
-            self.seq = str(reduce(lambda x, y: x + y,
-                                  filter(lambda char: chars.count(char), seq)))
-        except:
-            self.seq = ''
-
+        self.__chars = chars
+        self.seq = seq
         self.desc = desc
         self.breakrow_in = 70
-        self.chars = chars
 
     def __str__(self):
         return self.seq
@@ -29,10 +26,75 @@ class Seq:
     def composition(self) -> str:
         result = f'>gi|{self.id}| {self.desc}\n'
 
-        for i in range(0, len(self.seq), self.breakrow_in):
+        for i in range(0, len(self), self.breakrow_in):
             result += f'{self.seq[i:i+self.breakrow_in]}\n'
 
         return result
+
+    def save_as(self, filename: str, append: bool = False) -> None:
+        if not Seq.is_generic_fasta(filename):
+            raise ValueError('Filename must be a generic fasta.')
+
+        fastafile = open(f'{filename}', 'a' if append else 'w')
+        fastafile.write(self.composition())
+
+    def load_from(self, filename: str) -> SeqIterator:
+        if not Seq.is_generic_fasta(filename):
+            raise ValueError('Filename must be a generic fasta.')
+
+        fastafile = open(f'{filename}', 'r')
+        seqs = []
+        curseq = None
+
+        for line in fastafile.readlines():
+            if '>' in line:
+                if curseq:
+                    seqs.append(curseq)
+
+                header = line.split('|')
+                curseq = self.__class__(header[1], '', header[-1])
+                continue
+
+            curseq.seq += line
+
+        if curseq:
+            seqs.append(curseq)
+
+        if len(seqs) == 1:
+            self.id = seqs[0].id
+            self.seq = seqs[0].seq
+            self.desc = seqs[0].desc
+            self.origin = seqs[0].origin
+
+        return SeqIterator(seqs)
+
+    @property
+    def seq(self) -> str:
+        return self.__seq
+
+    @seq.setter
+    def seq(self, value: str):
+        value = str(value)
+
+        if not self.chars:
+            self.__seq = value
+            return
+
+        try:
+            self.__seq = str(reduce(
+                lambda a, b: a + b,
+                filter(lambda char: self.chars.count(char), value)
+            ))
+        except:
+            self.__seq = ''
+
+    @property
+    def chars(self) -> tuple:
+        return self.__chars
+
+    @chars.setter
+    def chars(self, value):
+        return
 
 
 class SeqAA(Seq):
@@ -48,33 +110,27 @@ class SeqAA(Seq):
         self.origin = origin
 
 
-class SeqAAFrames:
-    def __init__(self):
-        self.frames = [SeqAA('', ''), SeqAA('', ''), SeqAA('', ''),
-                       SeqAA('', ''), SeqAA('', ''), SeqAA('', '')]
-        self.frames[2]
-
-
 class SeqDNA(Seq):
     def __init__(self, id: str, seq: str, desc: str = '', chars: tuple = ()):
         super().__init__(id, seq, desc, ('A', 'T', 'G', 'C'))
+        self.origin = self
+
+    @staticmethod
+    def __complementary_nitro_base(nitro_base: str) -> str:
+        if nitro_base == 'A':
+            return 'T'
+        elif nitro_base == 'T':
+            return 'A'
+        elif nitro_base == 'G':
+            return 'C'
+        elif nitro_base == 'C':
+            return 'G'
+        return ''
 
     def complementary_reverse(self) -> SeqDNA:
         seq = ''
-
-        def reverse_nitro_base(nitro_base: str) -> str:
-            if nitro_base == 'A':
-                return 'T'
-            elif nitro_base == 'T':
-                return 'A'
-            elif nitro_base == 'G':
-                return 'C'
-            elif nitro_base == 'C':
-                return 'G'
-            return ''
-
         for nitro_base in self.seq:
-            seq += reverse_nitro_base(nitro_base)
+            seq += SeqDNA.__complementary_nitro_base(nitro_base)
 
         return SeqDNA(self.id, seq[::-1], self.desc)
 
@@ -126,3 +182,29 @@ class SeqRNA(Seq):
                     .get(revseq[i + j:i + j + 3]) or ''
 
         return seqaaframes
+
+
+class SeqAAFrames:
+    def __init__(self):
+        self.frames = [SeqAA('', ''), SeqAA('', ''), SeqAA('', ''),
+                       SeqAA('', ''), SeqAA('', ''), SeqAA('', '')]
+
+    def save_as(self, filename: str) -> None:
+        if not Seq.is_generic_fasta(filename):
+            raise ValueError('Filename must be a generic fasta.')
+
+        open(filename, 'w').close()
+        for frame in self.frames:
+            frame.save_as(filename, append=True)
+
+
+class SeqIterator:
+    def __init__(self, seqs: list):
+        self.__seqs = iter(seqs)
+        self.__len = len(seqs)
+
+    def __len__(self):
+        return self.__len
+
+    def next(self) -> Seq:
+        return next(self.__seqs)
