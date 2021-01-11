@@ -1,5 +1,6 @@
 from __future__ import annotations
 from functools import reduce
+from typing import List
 
 
 class Seq:
@@ -7,11 +8,14 @@ class Seq:
     def is_generic_fasta(filename: str) -> bool:
         return filename.split('.')[-1] in ('fasta', 'fas', 'seq', 'fa', 'fsa')
 
-    def __init__(self, id: str, seq: str, desc: str = '', chars: tuple = ()):
-        self.id = id
+    def __init__(self, id='', seq='', desc='', chars=(), origin=None):
         self.__chars = chars
-        self.seq = seq
-        self.desc = desc
+
+        self.id = str(id)
+        self.seq = str(seq)
+        self.desc = str(desc).replace('\n', '')
+        self.origin = origin
+
         self.breakrow_in = 70
 
     def __str__(self):
@@ -23,7 +27,23 @@ class Seq:
     def __len__(self):
         return len(self.seq)
 
-    def composition(self) -> str:
+    def frequency(self) -> dict:
+        frequency = {}
+
+        for char in self.chars:
+            frequency[char] = self.seq.count(char)
+
+        return frequency
+
+    def relative_frequency(self) -> dict:
+        frequency = {}
+
+        for char in self.chars:
+            frequency[char] = self.seq.count(char) / len(self)
+
+        return frequency
+
+    def to_fasta(self) -> str:
         result = f'>gi|{self.id}| {self.desc}\n'
 
         for i in range(0, len(self), self.breakrow_in):
@@ -36,14 +56,14 @@ class Seq:
             raise ValueError('Filename must be a generic fasta.')
 
         fastafile = open(f'{filename}', 'a' if append else 'w')
-        fastafile.write(self.composition())
+        fastafile.write(self.to_fasta())
 
-    def load_from(self, filename: str) -> SeqIterator:
+    def load_from(self, filename: str, load=0):
         if not Seq.is_generic_fasta(filename):
             raise ValueError('Filename must be a generic fasta.')
 
         fastafile = open(f'{filename}', 'r')
-        seqs = []
+        seqs: List[self.__class__] = []
         curseq = None
 
         for line in fastafile.readlines():
@@ -51,8 +71,14 @@ class Seq:
                 if curseq:
                     seqs.append(curseq)
 
-                header = line.split('|')
-                curseq = self.__class__(header[1], '', header[-1])
+                if 'gi|' in line:
+                    header = line.split('|')
+                    curseq = self.__class__(
+                        header[1], '', header[-1] if len(header) > 2 else ''
+                    )
+                else:
+                    curseq = self.__class__()
+
                 continue
 
             curseq.seq += line
@@ -60,13 +86,18 @@ class Seq:
         if curseq:
             seqs.append(curseq)
 
-        if len(seqs) == 1:
-            self.id = seqs[0].id
-            self.seq = seqs[0].seq
-            self.desc = seqs[0].desc
-            self.origin = seqs[0].origin
+        if load < 0 and -load > len(seqs):
+            load = 0
+        elif load >= len(seqs):
+            load = len(seqs) - 1
 
-        return SeqIterator(seqs)
+        if len(seqs) > 0:
+            self.id = seqs[load].id
+            self.seq = seqs[load].seq
+            self.desc = seqs[load].desc
+            self.origin = seqs[load].origin
+
+        return seqs
 
     @property
     def seq(self) -> str:
@@ -97,23 +128,10 @@ class Seq:
         return
 
 
-class SeqAA(Seq):
-    def __init__(self,
-                 id: str,
-                 seq: str,
-                 desc: str = '',
-                 chars: tuple = (),
-                 origin: SeqRNA = None):
-        super().__init__(id, seq, desc, ('C', 'F', 'L', 'I', 'M', 'V', 'S',
-                                         'P', 'A', 'Y', '*', 'H', 'Q', 'N',
-                                         'K', 'D', 'E', 'W', 'R', 'S', 'G'))
-        self.origin = origin
-
-
 class SeqDNA(Seq):
-    def __init__(self, id: str, seq: str, desc: str = '', chars: tuple = ()):
+    def __init__(self, id='', seq='', desc='', chars=(), origin=None):
         super().__init__(id, seq, desc, ('A', 'T', 'G', 'C'))
-        self.origin = self
+        self.origin: SeqDNA = self
 
     @staticmethod
     def __complementary_nitro_base(nitro_base: str) -> str:
@@ -155,14 +173,9 @@ class SeqRNA(Seq):
                   'CGG': 'R', 'AGU': 'S', 'AGC': 'S', 'AGA': 'R', 'AGG': 'R',
                   'GGU': 'G', 'GGC': 'G', 'GGA': 'G', 'GGG': 'G'}
 
-    def __init__(self,
-                 id: str,
-                 seq: str,
-                 desc: str = '',
-                 chars: tuple = (),
-                 origin: SeqDNA = None):
+    def __init__(self, id='', seq='', desc='', chars=(), origin=None):
         super().__init__(id, seq, desc, ('A', 'U', 'G', 'C'))
-        self.origin = origin
+        self.origin: SeqDNA = origin
 
     def translate(self) -> SeqAAFrames:
         seq = self.seq
@@ -184,10 +197,19 @@ class SeqRNA(Seq):
         return seqaaframes
 
 
+class SeqAA(Seq):
+    def __init__(self, id='', seq='', desc='', chars=(), origin=None):
+        super().__init__(
+            id, seq, desc, ('C', 'F', 'L', 'I', 'M', 'V', 'S',
+                            'P', 'A', 'Y', '*', 'H', 'Q', 'N',
+                            'K', 'D', 'E', 'W', 'R', 'S', 'G')
+        )
+        self.origin: SeqRNA = origin
+
+
 class SeqAAFrames:
     def __init__(self):
-        self.frames = [SeqAA('', ''), SeqAA('', ''), SeqAA('', ''),
-                       SeqAA('', ''), SeqAA('', ''), SeqAA('', '')]
+        self.frames = [SeqAA(), SeqAA(), SeqAA(), SeqAA(), SeqAA(), SeqAA()]
 
     def save_as(self, filename: str) -> None:
         if not Seq.is_generic_fasta(filename):
@@ -196,15 +218,3 @@ class SeqAAFrames:
         open(filename, 'w').close()
         for frame in self.frames:
             frame.save_as(filename, append=True)
-
-
-class SeqIterator:
-    def __init__(self, seqs: list):
-        self.__seqs = iter(seqs)
-        self.__len = len(seqs)
-
-    def __len__(self):
-        return self.__len
-
-    def next(self) -> Seq:
-        return next(self.__seqs)
