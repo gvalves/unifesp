@@ -125,7 +125,7 @@ class Seq:
 
     @chars.setter
     def chars(self, value):
-        return
+        pass
 
 
 class SeqDNA(Seq):
@@ -209,7 +209,7 @@ class SeqAA(Seq):
 
 class SeqAAFrames:
     def __init__(self):
-        self.frames = [SeqAA(), SeqAA(), SeqAA(), SeqAA(), SeqAA(), SeqAA()]
+        self.__frames = (SeqAA(), SeqAA(), SeqAA(), SeqAA(), SeqAA(), SeqAA())
 
     def save_as(self, filename: str) -> None:
         if not Seq.is_generic_fasta(filename):
@@ -218,3 +218,11 @@ class SeqAAFrames:
         open(filename, 'w').close()
         for frame in self.frames:
             frame.save_as(filename, append=True)
+
+    @property
+    def frames(self):
+        return self.__frames
+
+    @frames.setter
+    def frames(self, value):
+        pass
