@@ -3,12 +3,16 @@
 #include <string.h>
 #include <registration.h>
 
-int main()
+int main(int argc, char **argv)
 {
-  if (0)
+  *argv++;
+  for (int i = 1; i < argc; i++)
   {
-    createIndex(DATA, INDEX);
-    return 0;
+    if (strcmp("--create-index", *argv) == 0)
+    {
+      createIndex(DATA, INDEX);
+    }
+    *argv++;
   }
 
   char name[50];
