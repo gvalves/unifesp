@@ -27,6 +27,9 @@ class Trie:
 
             return reduce(lambda a, b: a + b, word[::-1])
 
+        def bind_values(self, node: Node):
+            self._values = node._values
+
         @property
         def has_child(self) -> bool:
             for child in self._children:
@@ -61,12 +64,12 @@ class Trie:
 
         return index
 
-    def insert(self, key: str, value: int) -> None:
+    def insert(self, key: str, value: int) -> self.Node:
         node = self.get(key)
 
         if node:
             node._values.append(value)
-            return
+            return node
 
         if len(key) == 1:
             index = self._char_to_index(key)
@@ -88,6 +91,8 @@ class Trie:
                     if len(key) == i + 1:
                         node._values.append(value)
                         node._is_leaf = True
+
+        return node
 
     def delete(self, key: str) -> None:
         def _delete(node: self.Node, recursive_call: bool) -> None:
@@ -146,31 +151,3 @@ class Trie:
 
     def has(self, key: str) -> bool:
         return bool(self.get(key))
-
-
-def main():
-
-    # Input keys (use only 'a' through 'z' and lower case)
-    keys = ["the", "a", "there", "anaswe", "any",
-            "by", "their"]
-    output = ["Not present in trie",
-              "Present in trie"]
-
-    # Trie object
-    t = Trie()
-
-    # Construct trie
-    for key in keys:
-        t.insert(key, 0)
-
-    # Search for different keys
-    print("{} ---- {}".format("the", output[t.has("the")]))
-    print("{} ---- {}".format("these", output[t.has("these")]))
-    print("{} ---- {}".format("their", output[t.has("their")]))
-    print("{} ---- {}".format("thaw", output[t.has("thaw")]))
-
-    print(t.get('there'))
-
-
-if __name__ == '__main__':
-    main()

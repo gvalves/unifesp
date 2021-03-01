@@ -5,9 +5,9 @@ from typing import List
 
 class AVLTree:
     class Node:
-        def __init__(self, key: str, value: int):
-            self._key: str = key
-            self._value: int = value
+        def __init__(self, key: int, value: str):
+            self._key: int = key
+            self._value: str = value
             self._height: int = 0
             self._balance_factor: int = 0
             self._parent: self.__class__ = None
@@ -15,24 +15,10 @@ class AVLTree:
             self._right_child: self.__class__ = None
 
         def _update_balance_factor(self) -> None:
-            self._update_height()
-
             l_height = self._left_child.height if self._left_child else -1
             r_height = self._right_child.height if self._right_child else -1
 
             self._balance_factor = l_height - r_height
-
-        def _update_height(self) -> None:
-            if self._left_child:
-                self._left_child._update_height()
-
-            if self._right_child:
-                self._right_child._update_height()
-
-            l_height = self._left_child.height if self._left_child else -1
-            r_height = self._right_child.height if self._right_child else -1
-
-            self._height = max(l_height, r_height) + 1
 
         def _insert(self, node: Node) -> None:
             if node._key < self._key:
@@ -42,25 +28,31 @@ class AVLTree:
                 self._right_child = node
                 node._parent = self
 
-        def _append(self, node: Node) -> Node:
+        def _append(self, node: Node) -> None:
             if node._key < self._key:
                 if self._left_child:
+                    self._height += 1
                     self._left_child._append(node)
                 else:
                     self._insert(node)
             else:
                 if self._right_child:
-                    self._right_child._append(node)
+                    self._height += 1
+                    try:
+                        self._right_child._append(node)
+                    except:
+                        pass
                 else:
                     self._insert(node)
-
-            return node
+            # append_node_in(self, node)
 
         def _delete(self) -> Node:
             if not self._parent:
                 raise Exception('Cannot delete node without parent')
 
             if self.number_of_children == 0:
+                self._decrease_all_parents_height(self)
+
                 if self._parent._left_child == self:
                     self._parent._left_child = None
                 else:
@@ -68,6 +60,8 @@ class AVLTree:
 
                 return self._parent
             elif self.number_of_children == 1:
+                self._decrease_all_parents_height(self)
+
                 if self._left_child:
                     self._parent._insert(self._left_child)
                     return self._left_child
@@ -84,25 +78,25 @@ class AVLTree:
 
         def _find(self, key: str) -> Node:
             def find_in(node: Node) -> Node:
-                if not node:
-                    raise KeyError('Dont exists node with the passed key')
+                while True:
+                    if not node:
+                        raise KeyError('Dont exists node with the passed key')
 
-                if key == node._key:
-                    return node
-                elif key < node._key:
-                    return find_in(node._left_child)
-                else:
-                    return find_in(node._right_child)
+                    if key == node._key:
+                        return node
+                    elif key < node._key:
+                        node = node._left_child
+                    else:
+                        node = node._right_child
 
             return find_in(self)
 
         def _find_all_by_substr(self, substr: str) -> List[tuple]:
-            return filter(
-                lambda _str, _substr: _str.count(_substr) > 0,
-                self._to_list()
-            )
+            return [el for el in self._to_list() if el[1].lower().count(substr.lower())]
 
         def _to_list(self) -> List[tuple]:
+            _list: List[tuple] = []
+
             def add_in_list(node: Node) -> None:
                 _list.append((node._key, node._value))
 
@@ -111,11 +105,14 @@ class AVLTree:
                 if node._right_child:
                     add_in_list(node._right_child)
 
-            _list: List[tuple] = []
-
             add_in_list(self)
 
             return _list
+
+        def _decrease_all_parents_height(self, node: Node) -> None:
+            while node._parent:
+                node._parent._height -= 1
+                node = node._parent
 
         def _balance(self):
             if self.is_balanced:
@@ -123,16 +120,27 @@ class AVLTree:
 
             if self.is_left_heavy:
                 if self._left_child.is_right_heavy:
+                    # if self._left_child._right_child:
                     self._left_child._left_rotation()
+                    # else:
+                    #     self._right_rotation()
                     self._right_rotation()
+                    self._decrease_all_parents_height(self)
                 else:
                     self._right_rotation()
+                    self._decrease_all_parents_height(self)
             elif self.is_right_heavy:
                 if self._right_child.is_right_heavy:
                     self._left_rotation()
+                    self._decrease_all_parents_height(self)
                 else:
+                    # if self._right_child._left_child:
                     self._right_child._right_rotation()
+                    # else:
+                    #     print(self.is_right_heavy)
+                    #     self._left_rotation()
                     self._left_rotation()
+                    self._decrease_all_parents_height(self)
 
         def _left_rotation(self) -> None:
             child = self._right_child
@@ -152,6 +160,9 @@ class AVLTree:
                 else:
                     child._parent._right_child = child
 
+            self._height -= 2
+            child._height += 1
+
         def _right_rotation(self) -> None:
             child = self._left_child
             self._left_child = None
@@ -170,24 +181,30 @@ class AVLTree:
                 else:
                     child._parent._right_child = child
 
+            self._height -= 2
+            child._height += 1
+
         @property
         def is_balanced(self) -> bool:
+            self._update_balance_factor()
             return abs(self._balance_factor) <= 1
 
         @property
         def is_left_heavy(self) -> bool:
+            self._update_balance_factor()
             return self._balance_factor > 0
 
         @property
         def is_right_heavy(self) -> bool:
+            self._update_balance_factor()
             return self._balance_factor < 0
 
         @property
-        def key(self) -> str:
+        def key(self) -> int:
             return self._key
 
         @property
-        def value(self) -> int:
+        def value(self) -> str:
             return self._value
 
         @property
@@ -243,23 +260,30 @@ class AVLTree:
         self._root: self.Node = None
 
     def _get_unbalanced_node(self, node: self.Node) -> self.Node:
-        node._update_balance_factor()
+        while node.is_balanced:
+            node = node._parent
 
-        if node.is_balanced:
-            if node._parent:
-                return self._get_unbalanced_node(node._parent)
-        else:
-            return node
+        return node
 
-    def _balance(self, node: self.Node) -> None:
-        if not self.is_balanced:
+    def _delete_balance(self, node: self.Node) -> None:
+        while not self.is_balanced:
             unbalanced_node = self._get_unbalanced_node(node)
             unbalanced_node._balance()
 
             if unbalanced_node == self._root:
                 self._root = self._root._parent
 
-            self._balance(node._parent)
+            node = node._parent
+
+    def _insert_balance(self, node: self.Node) -> None:
+        if self.is_balanced:
+            return
+
+        unbalanced_node = self._get_unbalanced_node(node)
+        unbalanced_node._balance()
+
+        if unbalanced_node == self._root:
+            self._root = self._root._parent
 
     def insert(self, key: str, value: int) -> self.Node:
         if self.is_empty:
@@ -267,7 +291,8 @@ class AVLTree:
             return self._root
 
         new_node = self.Node(key, value)
-        self._balance(self._root._append(new_node))
+        self._root._append(new_node)
+        self._insert_balance(new_node)
 
         return new_node
 
@@ -280,7 +305,7 @@ class AVLTree:
         if self._root.number_of_children == 0:
             self._root = None
         else:
-            self._balance(node._delete())
+            self._delete_balance(node._delete())
 
         return node
 
@@ -321,7 +346,6 @@ class AVLTree:
 
     @property
     def is_balanced(self) -> bool:
-        self._root._update_balance_factor()
         return self._root.is_balanced
 
     @property
