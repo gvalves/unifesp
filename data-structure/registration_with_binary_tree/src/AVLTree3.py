@@ -44,7 +44,6 @@ class AVLTree:
                         pass
                 else:
                     self._insert(node)
-            # append_node_in(self, node)
 
         def _delete(self) -> Node:
             if not self._parent:
@@ -120,10 +119,7 @@ class AVLTree:
 
             if self.is_left_heavy:
                 if self._left_child.is_right_heavy:
-                    # if self._left_child._right_child:
                     self._left_child._left_rotation()
-                    # else:
-                    #     self._right_rotation()
                     self._right_rotation()
                     self._decrease_all_parents_height(self)
                 else:
@@ -134,11 +130,7 @@ class AVLTree:
                     self._left_rotation()
                     self._decrease_all_parents_height(self)
                 else:
-                    # if self._right_child._left_child:
                     self._right_child._right_rotation()
-                    # else:
-                    #     print(self.is_right_heavy)
-                    #     self._left_rotation()
                     self._left_rotation()
                     self._decrease_all_parents_height(self)
 
