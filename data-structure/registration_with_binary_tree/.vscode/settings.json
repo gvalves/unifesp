@@ -4,6 +4,11 @@
     ".stylelintrc": "json",
     ".prettierrc": "json",
     "memory.h": "c",
-    "stdlib.h": "c"
+    "stdlib.h": "c",
+    "avltree3.h": "c",
+    "stdio.h": "c",
+    "registration.h": "c",
+    "stack.h": "c",
+    "exception.h": "c"
   }
 }

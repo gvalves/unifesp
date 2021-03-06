@@ -1,13 +1,15 @@
 .PHONY: main.out
 
-CC = gcc -I src
-LIB := $(shell cd src && ls *.c)
+SRC = src/c
+BIN = bin
+CC := gcc -I $(SRC)
+LIB := $(shell ls $(SRC)/*.c | xargs -n 1 basename)
 
 all: $(LIB:.c=) main.out
 	@
 
 main.out:
-	@$(CC) $(shell ls bin/*.o) -o $@
+	@$(CC) $(shell ls $(BIN)/*.o) -o $@
 
 %:
-	@$(CC) -c src/$@.c -o bin/$@.o
+	@$(CC) -c $(SRC)/$@.c -o $(BIN)/$@.o
