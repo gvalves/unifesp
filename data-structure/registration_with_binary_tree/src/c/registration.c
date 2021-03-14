@@ -34,11 +34,11 @@ Stack *find_registers(char *name, BST *data)
   do
   {
     cur_register = (Stack *)stack_pop(data_stack);
-    if (strstr(cur_register->tail->value, name))
+    if (strstr(stack_tail(cur_register)->value, name))
     {
       stack_push(found_registers, create_stack_node(cur_register));
     }
-  } while (data_stack->head);
+  } while (stack_head(data_stack));
 
   free(data_stack);
 

@@ -9,6 +9,7 @@
     "stdio.h": "c",
     "registration.h": "c",
     "stack.h": "c",
-    "exception.h": "c"
+    "exception.h": "c",
+    "type_traits": "c"
   }
 }

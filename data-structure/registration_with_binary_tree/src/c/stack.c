@@ -55,8 +55,8 @@ void stack_push(Stack *stack, StackNode *node)
     return;
   }
   StackNode *prev_tail = stack->_tail;
-  prev_tail->next = node;
-  node->prev = prev_tail;
+  prev_tail->_next = node;
+  node->_prev = prev_tail;
   stack->_tail = node;
 }
 
@@ -81,12 +81,30 @@ void *stack_pop(Stack *stack)
   }
   else
   {
-    stack->_tail = prev_tail->prev;
-    stack->_tail->next = NULL;
+    stack->_tail = prev_tail->_prev;
+    stack->_tail->_next = NULL;
   }
   free(prev_tail);
 
   return value;
+}
+
+StackNode *stack_head(Stack *stack)
+{
+  if (!stack)
+  {
+    throw_null_stack_exception();
+  }
+  return stack->_head;
+}
+
+StackNode *stack_tail(Stack *stack)
+{
+  if (!stack)
+  {
+    throw_null_stack_exception();
+  }
+  return stack->_tail;
 }
 
 size_t stack_size(Stack *stack)
@@ -96,4 +114,22 @@ size_t stack_size(Stack *stack)
     throw_null_stack_exception();
   }
   return stack->_size;
+}
+
+StackNode *stack_next(StackNode *node)
+{
+  if (!node)
+  {
+    throw_null_stack_node_exception();
+  }
+  return node->_next;
+}
+
+StackNode *stack_prev(StackNode *node)
+{
+  if (!node)
+  {
+    throw_null_stack_node_exception();
+  }
+  return node->_prev;
 }

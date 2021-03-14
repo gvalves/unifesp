@@ -6,8 +6,8 @@
 typedef struct _StackNode
 {
   void *value;
-  struct _StackNode *prev;
-  struct _StackNode *next;
+  struct _StackNode *_prev;
+  struct _StackNode *_next;
 } StackNode;
 
 typedef struct _Stack
@@ -21,6 +21,10 @@ Stack *create_stack(StackNode *head);
 StackNode *create_stack_node(void *value);
 void stack_push(Stack *stack, StackNode *node);
 void *stack_pop(Stack *stack);
+StackNode *stack_head(Stack *stack);
+StackNode *stack_tail(Stack *stack);
 size_t stack_size(Stack *stack);
+StackNode *stack_next(StackNode *node);
+StackNode *stack_prev(StackNode *node);
 
 #endif

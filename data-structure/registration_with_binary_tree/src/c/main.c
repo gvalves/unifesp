@@ -34,7 +34,7 @@ int main()
   {
     cur_register = (Stack *)stack_pop(found_registers);
 
-    fseek(data_stream, (long)cur_register->head->value, SEEK_SET);
+    fseek(data_stream, (long)stack_head(cur_register)->value, SEEK_SET);
     fgets(cur_line, MAX_LINE_LEN, data_stream);
 
     printf("Nome: %s\n", extract_register_data(cur_line, NOME));

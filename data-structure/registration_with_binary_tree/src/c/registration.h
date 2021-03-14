@@ -8,7 +8,7 @@
 #define MAX_DATA_LEN 200
 
 char *extract_register_data(char *line, int data_type);
-Stack *find_registers(char *str_search, BST *indexes);
+Stack *find_registers(char *name, BST *data);
 
 #define ID 1
 #define ID_SERVIDOR_PORTAL 1 + 1

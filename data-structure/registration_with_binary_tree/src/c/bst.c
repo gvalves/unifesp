@@ -36,11 +36,11 @@ static void throw_null_bst_node_exception()
 BST *create_bst(BSTNode *root)
 {
   BST *new_bst = malloc(sizeof(BST));
-  new_bst->root = root;
+  new_bst->_root = root;
 
   if (root)
   {
-    new_bst->_private._size = 1;
+    new_bst->_size = 1;
   }
   return new_bst;
 }
@@ -48,7 +48,7 @@ BST *create_bst(BSTNode *root)
 BSTNode *create_bst_node(u_long key, void *value)
 {
   BSTNode *new_node = malloc(sizeof(BSTNode));
-  new_node->key = key;
+  new_node->_key = key;
   new_node->value = value;
   return new_node;
 }
@@ -59,16 +59,16 @@ BSTNode *bst_find(BST *bst, u_long key)
   {
     throw_null_bst_exception();
   }
-  BSTNode *cur_node = bst->root;
+  BSTNode *cur_node = bst->_root;
 
-  while (key != cur_node->key)
+  while (key != cur_node->_key)
   {
-    if (key < cur_node->key)
+    if (key < cur_node->_key)
     {
-      cur_node = cur_node->left_child;
+      cur_node = cur_node->_left_child;
       continue;
     }
-    cur_node = cur_node->right_child;
+    cur_node = cur_node->_right_child;
   }
   return cur_node;
 }
@@ -83,17 +83,17 @@ void bst_insert(BST *bst, BSTNode *node)
   {
     throw_null_bst_node_exception();
   }
-  ++bst->_private._size;
+  ++bst->_size;
 
-  if (!bst->root)
+  if (!bst->_root)
   {
-    bst->root = node;
+    bst->_root = node;
     return;
   }
   BSTNode *deepthest_node = node;
-  append_node(bst->root, node);
+  append_node(bst->_root, node);
 
-  while (!is_balanced_node(bst->root))
+  while (!is_balanced_node(bst->_root))
   {
     balance_node(bst, deepthest_node);
     deepthest_node = get_deepthest_node(deepthest_node);
@@ -106,11 +106,11 @@ void bst_delete(BST *bst, u_long key)
   {
     throw_null_bst_exception();
   }
-  --bst->_private._size;
+  --bst->_size;
 
   BSTNode *cur_node, *deepthest_node;
   cur_node = bst_find(bst, key);
-  deepthest_node = cur_node->parent;
+  deepthest_node = cur_node->_parent;
   int children_qt;
 
   while (1)
@@ -123,30 +123,30 @@ void bst_delete(BST *bst, u_long key)
     }
     else if (children_qt == 1)
     {
-      BSTNode *child_node = cur_node->left_child ? cur_node->left_child : cur_node->right_child;
-      if (child_node->key < cur_node->parent->key)
+      BSTNode *child_node = cur_node->_left_child ? cur_node->_left_child : cur_node->_right_child;
+      if (child_node->_key < cur_node->_parent->_key)
       {
-        cur_node->parent->left_child = child_node;
-        child_node->parent = cur_node->parent;
+        cur_node->_parent->_left_child = child_node;
+        child_node->_parent = cur_node->_parent;
       }
       else
       {
-        cur_node->parent->right_child = child_node;
-        child_node->parent = cur_node->parent;
+        cur_node->_parent->_right_child = child_node;
+        child_node->_parent = cur_node->_parent;
       }
       break;
     }
     BSTNode *successor = get_left_most_node(cur_node);
 
-    cur_node->key = successor->key;
+    cur_node->_key = successor->_key;
     cur_node->value = successor->value;
 
     cur_node = successor;
   }
 
-  update_node_height(cur_node->parent);
+  update_node_height(cur_node->_parent);
 
-  while (!is_balanced_node(bst->root))
+  while (!is_balanced_node(bst->_root))
   {
     balance_node(bst, deepthest_node);
     deepthest_node = get_deepthest_node(deepthest_node);
@@ -161,7 +161,7 @@ Stack *bst_to_stack(BST *bst)
   {
     throw_null_bst_exception();
   }
-  if (!bst->root)
+  if (!bst->_root)
   {
     throw_exception("Cannot convert empty bst to array.");
   }
@@ -170,36 +170,45 @@ Stack *bst_to_stack(BST *bst)
   size_t cur_stack_length = 0;
 
   node_stack = create_stack(NULL);
-  cur_node = bst->root;
+  cur_node = bst->_root;
 
   while (cur_node)
   {
-    cur_node_info = create_stack(create_stack_node((void *)cur_node->key));
+    cur_node_info = create_stack(create_stack_node((void *)cur_node->_key));
     stack_push(cur_node_info, create_stack_node((void *)cur_node->value));
     stack_push(node_stack, create_stack_node((void *)cur_node_info));
 
-    if (++cur_stack_length >= bst->_private._size)
+    if (++cur_stack_length >= bst->_size)
     {
       break;
     }
-    if (cur_node->left_child)
+    if (cur_node->_left_child)
     {
-      cur_node = cur_node->left_child;
+      cur_node = cur_node->_left_child;
       continue;
     }
-    while (!cur_node->right_child || cur_node->right_child == prev_node)
+    while (!cur_node->_right_child || cur_node->_right_child == prev_node)
     {
       prev_node = cur_node;
-      cur_node = cur_node->parent;
+      cur_node = cur_node->_parent;
       if (!cur_node)
       {
         break;
       }
     }
-    cur_node = cur_node->right_child;
+    cur_node = cur_node->_right_child;
   }
 
   return node_stack;
+}
+
+BSTNode *bst_root(BST *bst)
+{
+  if (!bst)
+  {
+    throw_null_bst_exception();
+  }
+  return bst->_root;
 }
 
 size_t bst_size(BST *bst)
@@ -208,7 +217,52 @@ size_t bst_size(BST *bst)
   {
     throw_null_bst_exception();
   }
-  return bst->_private._size;
+  return bst->_size;
+}
+
+u_long bst_node_key(BSTNode *node)
+{
+  if (!node)
+  {
+    throw_null_bst_node_exception();
+  }
+  return node->_key;
+}
+
+BSTNode *bst_node_left_child(BSTNode *node)
+{
+  if (!node)
+  {
+    throw_null_bst_node_exception();
+  }
+  return node->_left_child;
+}
+
+BSTNode *bst_node_right_child(BSTNode *node)
+{
+  if (!node)
+  {
+    throw_null_bst_node_exception();
+  }
+  return node->_right_child;
+}
+
+BSTNode *bst_node_parent(BSTNode *node)
+{
+  if (!node)
+  {
+    throw_null_bst_node_exception();
+  }
+  return node->_parent;
+}
+
+int bst_node_height(BSTNode *node)
+{
+  if (!node)
+  {
+    throw_null_bst_node_exception();
+  }
+  return node->_height;
 }
 
 // Private functions
@@ -223,27 +277,27 @@ static void append_node(BSTNode *parent_node, BSTNode *child_node)
 
   while (1)
   {
-    ++cur_node->height;
-    if (child_node->key < cur_node->key)
+    ++cur_node->_height;
+    if (child_node->_key < cur_node->_key)
     {
-      if (cur_node->left_child)
+      if (cur_node->_left_child)
       {
-        cur_node = cur_node->left_child;
+        cur_node = cur_node->_left_child;
         continue;
       }
-      cur_node->left_child = child_node;
-      child_node->parent = cur_node;
+      cur_node->_left_child = child_node;
+      child_node->_parent = cur_node;
       break;
     }
     else
     {
-      if (cur_node->right_child)
+      if (cur_node->_right_child)
       {
-        cur_node = cur_node->right_child;
+        cur_node = cur_node->_right_child;
         continue;
       }
-      cur_node->right_child = child_node;
-      child_node->parent = cur_node;
+      cur_node->_right_child = child_node;
+      child_node->_parent = cur_node;
       break;
     }
   }
@@ -259,7 +313,7 @@ static BSTNode *get_unbalanced_node(BSTNode *node)
 
   while (is_balanced_node(cur_node))
   {
-    cur_node = cur_node->parent;
+    cur_node = cur_node->_parent;
     if (!cur_node)
     {
       break;
@@ -277,9 +331,9 @@ static BSTNode *get_left_most_node(BSTNode *node)
   }
   BSTNode *cur_node = node;
 
-  while (cur_node->left_child)
+  while (cur_node->_left_child)
   {
-    cur_node = cur_node->left_child;
+    cur_node = cur_node->_left_child;
   }
 
   return cur_node;
@@ -293,9 +347,9 @@ static BSTNode *get_right_most_node(BSTNode *node)
   }
   BSTNode *cur_node = node;
 
-  while (cur_node->right_child)
+  while (cur_node->_right_child)
   {
-    cur_node = cur_node->right_child;
+    cur_node = cur_node->_right_child;
   }
 
   return cur_node;
@@ -310,11 +364,11 @@ static BSTNode *get_deepthest_node(BSTNode *node)
   BSTNode *cur_node = node;
   int l_height, r_height;
 
-  while (cur_node->height != 0)
+  while (cur_node->_height != 0)
   {
-    l_height = get_node_height(cur_node->left_child);
-    r_height = get_node_height(cur_node->right_child);
-    cur_node = l_height > r_height ? cur_node->left_child : cur_node->right_child;
+    l_height = get_node_height(cur_node->_left_child);
+    r_height = get_node_height(cur_node->_right_child);
+    cur_node = l_height > r_height ? cur_node->_left_child : cur_node->_right_child;
   }
 
   return cur_node;
@@ -322,7 +376,7 @@ static BSTNode *get_deepthest_node(BSTNode *node)
 
 static int get_node_height(BSTNode *node)
 {
-  return node ? node->height : -1;
+  return node ? node->_height : -1;
 }
 
 static int get_node_balance(BSTNode *node)
@@ -331,7 +385,7 @@ static int get_node_balance(BSTNode *node)
   {
     throw_null_bst_node_exception();
   }
-  return get_node_height(node->left_child) - get_node_height(node->right_child);
+  return get_node_height(node->_left_child) - get_node_height(node->_right_child);
 }
 
 static int get_node_children_quantity(BSTNode *node)
@@ -341,11 +395,11 @@ static int get_node_children_quantity(BSTNode *node)
     throw_null_bst_node_exception();
   }
   int qt = 0;
-  if (node->left_child)
+  if (node->_left_child)
   {
     qt += 1;
   }
-  if (node->right_child)
+  if (node->_right_child)
   {
     qt += 1;
   }
@@ -390,10 +444,10 @@ static void update_node_height(BSTNode *node)
 
   while (cur_node)
   {
-    l_height = get_node_height(cur_node->left_child);
-    r_height = get_node_height(cur_node->right_child);
-    cur_node->height = (l_height > r_height ? l_height : r_height) + 1;
-    cur_node = cur_node->parent;
+    l_height = get_node_height(cur_node->_left_child);
+    r_height = get_node_height(cur_node->_right_child);
+    cur_node->_height = (l_height > r_height ? l_height : r_height) + 1;
+    cur_node = cur_node->_parent;
   }
 }
 
@@ -412,9 +466,9 @@ static void balance_node(BST *bst, BSTNode *node)
 
   if (is_left_heavy_node(unbalanced_node))
   {
-    if (unbalanced_node->left_child->right_child)
+    if (unbalanced_node->_left_child->_right_child)
     {
-      left_rotate_node(bst, unbalanced_node->left_child);
+      left_rotate_node(bst, unbalanced_node->_left_child);
       right_rotate_node(bst, unbalanced_node);
       return;
     }
@@ -422,9 +476,9 @@ static void balance_node(BST *bst, BSTNode *node)
   }
   else
   {
-    if (unbalanced_node->right_child->left_child)
+    if (unbalanced_node->_right_child->_left_child)
     {
-      right_rotate_node(bst, unbalanced_node->right_child);
+      right_rotate_node(bst, unbalanced_node->_right_child);
       left_rotate_node(bst, unbalanced_node);
       return;
     }
@@ -439,34 +493,34 @@ static void left_rotate_node(BST *bst, BSTNode *node)
     throw_null_bst_node_exception();
   }
   BSTNode *parent_node, *child_node;
-  parent_node = node->parent;
-  child_node = node->right_child;
-  node->right_child = NULL;
+  parent_node = node->_parent;
+  child_node = node->_right_child;
+  node->_right_child = NULL;
 
-  child_node->parent = parent_node;
-  node->parent = child_node;
+  child_node->_parent = parent_node;
+  node->_parent = child_node;
 
   if (parent_node)
   {
-    if (child_node->key < parent_node->key)
+    if (child_node->_key < parent_node->_key)
     {
-      parent_node->left_child = child_node;
+      parent_node->_left_child = child_node;
     }
     else
     {
-      parent_node->right_child = child_node;
+      parent_node->_right_child = child_node;
     }
   }
 
-  if (child_node->left_child)
+  if (child_node->_left_child)
   {
-    append_node(node, child_node->left_child);
+    append_node(node, child_node->_left_child);
   }
-  child_node->left_child = node;
+  child_node->_left_child = node;
 
-  if (node == bst->root)
+  if (node == bst->_root)
   {
-    bst->root = child_node;
+    bst->_root = child_node;
   }
 
   update_node_height(node);
@@ -479,34 +533,34 @@ static void right_rotate_node(BST *bst, BSTNode *node)
     throw_null_bst_node_exception();
   }
   BSTNode *parent_node, *child_node;
-  parent_node = node->parent;
-  child_node = node->left_child;
-  node->left_child = NULL;
+  parent_node = node->_parent;
+  child_node = node->_left_child;
+  node->_left_child = NULL;
 
-  child_node->parent = parent_node;
-  node->parent = child_node;
+  child_node->_parent = parent_node;
+  node->_parent = child_node;
 
   if (parent_node)
   {
-    if (child_node->key < parent_node->key)
+    if (child_node->_key < parent_node->_key)
     {
-      parent_node->left_child = child_node;
+      parent_node->_left_child = child_node;
     }
     else
     {
-      parent_node->right_child = child_node;
+      parent_node->_right_child = child_node;
     }
   }
 
-  if (child_node->right_child)
+  if (child_node->_right_child)
   {
-    append_node(node, child_node->right_child);
+    append_node(node, child_node->_right_child);
   }
-  child_node->right_child = node;
+  child_node->_right_child = node;
 
-  if (node == bst->root)
+  if (node == bst->_root)
   {
-    bst->root = child_node;
+    bst->_root = child_node;
   }
 
   update_node_height(node);
